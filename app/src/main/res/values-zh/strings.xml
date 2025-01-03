@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">红牛</string>
+    <string name="welcome_default">Just Do It</string>
+    <string name="monitor_option_title">监视选项</string>
+    <string name="monitor_system_notification">监视系统通知</string>
+    <string name="monitor_system_notification_description">读取消息通知中的红包提示并进入聊天界面</string>
+    <string name="monitor_chat_list">监视聊天列表</string>
+    <string name="monitor_char_list_description">读取聊天列表中的红包提示并进入聊天界面</string>
+    <string name="basic_functionality_option_title">基础功能</string>
+    <string name="automatically_open_packet">自动拆红包</string>
+    <string name="delay_open_packet">延时拆红包</string>
+    <string name="open_packet_by_self">拆自己发的红包</string>
+    <string name="shield_packet_text">屏蔽红包文字</string>
+    <string name="shield_packet_text_description">不拆开包含某些文字的红包</string>
+    <string name="about_option_title">关于应用</string>
+    <string name="check_latest_version">检查新版本</string>
+    <string name="check_latest_version_url">访问https://github.com/hencejacki</string>
+    <string name="experimental_option_title">实验功能</string>
+    <string name="open_packet_in_breathing">息屏抢红包</string>
+    <string name="open_packet_in_breathing_description">保持后台活跃，谨慎使用</string>
+</resources>

@@ -1,0 +1,31 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">RedBull</string>
+    <string name="welcome_default">Just Do It</string>
+    <string name="monitor_option_title">Monitor Options</string>
+    <string name="monitor_system_notification">Monitor system notification</string>
+    <string name="monitor_system_notification_description">
+        Read the prompt of red packet in notification and enter chat interface
+    </string>
+    <string name="monitor_chat_list">Monitor chat list</string>
+    <string name="monitor_char_list_description">
+        Read the prompt of red packet in chat interface and enter chat interface
+    </string>
+    <string name="basic_functionality_option_title">Basic functionality</string>
+    <string name="automatically_open_packet">Open packet automatically</string>
+    <string name="delay_open_packet">Open packet lingeringly</string>
+    <string name="open_packet_by_self">Open packet by yourself</string>
+    <string name="shield_packet_text">Shield packet text</string>
+    <string name="shield_packet_text_description">
+        Do not open packet which contains some text
+    </string>
+    <string name="about_option_title">About app</string>
+    <string name="check_latest_version">Check latest version</string>
+    <string name="check_latest_version_url">
+        Check it at https://github.com/hencejacki
+    </string>
+    <string name="experimental_option_title">Experimental functionality</string>
+    <string name="open_packet_in_breathing">Open packet in breathing mode</string>
+    <string name="open_packet_in_breathing_description">
+        Keep alive in backend, carefully use
+    </string>
+</resources>
