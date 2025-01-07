@@ -173,7 +173,9 @@ fun HomeScn(
     modifier: Modifier = Modifier
 ) {
 
-    val appViewModel: AppViewModel = viewModel()
+    val appViewModel: AppViewModel = viewModel(
+        factory = AppViewModel.Factory
+    )
 
     Column (
         modifier = modifier.verticalScroll(

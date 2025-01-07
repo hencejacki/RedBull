@@ -1,11 +1,22 @@
 package com.newyear.redbull.model
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.newyear.redbull.RedBullApplication
+import com.newyear.redbull.data.UserPreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class AppViewModel : ViewModel() {
+class AppViewModel (
+    val userPreferencesRepository: UserPreferencesRepository
+) : ViewModel() {
     private var _basicFunctionalityState = MutableStateFlow(BasicFunctionalityState())
     val basicFunctionalityState = _basicFunctionalityState.asStateFlow()
 
@@ -15,6 +26,7 @@ class AppViewModel : ViewModel() {
                 autoOpenRedPacket = value
             )
         }
+        updateBasicFunctionalityCache()
     }
 
     fun updateDelaySeconds(value: Float) {
@@ -23,6 +35,7 @@ class AppViewModel : ViewModel() {
                 delaySeconds = value
             )
         }
+        updateBasicFunctionalityCache()
     }
 
     fun updateOpenRedPacketMySelf(value: Boolean) {
@@ -31,6 +44,7 @@ class AppViewModel : ViewModel() {
                 openRedPacketMySelf = value
             )
         }
+        updateBasicFunctionalityCache()
     }
 
     fun updateShieldTextContent(value: String) {
@@ -38,6 +52,13 @@ class AppViewModel : ViewModel() {
             currentState.copy(
                 shieldTextContent = value
             )
+        }
+        updateBasicFunctionalityCache()
+    }
+
+    private fun updateBasicFunctionalityCache() {
+        viewModelScope.launch {
+            userPreferencesRepository.SaveBasicFunctionalityPreference(basicFunctionalityState.value)
         }
     }
 
@@ -50,6 +71,7 @@ class AppViewModel : ViewModel() {
                 monitorSystemNotification = value
             )
         }
+        updateMonitorOptionCache()
     }
 
     fun updateMonitorChatListNotification(value: Boolean) {
@@ -57,6 +79,13 @@ class AppViewModel : ViewModel() {
             currentState.copy(
                 monitorChatListNotification = value
             )
+        }
+        updateMonitorOptionCache()
+    }
+
+    private fun updateMonitorOptionCache() {
+        viewModelScope.launch {
+            userPreferencesRepository.SaveMonitorOptionPreference(monitorOptionState.value)
         }
     }
 
@@ -68,6 +97,42 @@ class AppViewModel : ViewModel() {
             currentState.copy(
                 openReadPacketInBreathMode = value
             )
+        }
+        updateExperimentalFunctionalityCache()
+    }
+
+    private fun updateExperimentalFunctionalityCache() {
+        viewModelScope.launch {
+            userPreferencesRepository.SaveExperimentalFunctionalityPreference(experimentalFunctionalityState.value)
+        }
+    }
+
+    init {
+        viewModelScope.launch {
+            launch {
+                userPreferencesRepository.basicFunctionalityPreferences.collectLatest {
+                    _basicFunctionalityState.value = it
+                }
+            }
+            launch {
+                userPreferencesRepository.monitorOptionPreference.collectLatest {
+                    _monitorOptionState.value = it
+                }
+            }
+            launch {
+                userPreferencesRepository.experimentalFunctionalityPreferences.collectLatest {
+                    _experimentalFunctionalityState.value = it
+                }
+            }
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = (this[APPLICATION_KEY] as RedBullApplication)
+                AppViewModel(application.userPreferencesRepository)
+            }
         }
     }
 }

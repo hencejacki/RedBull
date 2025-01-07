@@ -8,8 +8,8 @@ data class BasicFunctionalityState(
 )
 
 data class MonitorOptionState(
-    val monitorSystemNotification: Boolean = true,
-    val monitorChatListNotification: Boolean = true
+    val monitorSystemNotification: Boolean = false,
+    val monitorChatListNotification: Boolean = false
 )
 
 data class ExperimentalFunctionalityState(
