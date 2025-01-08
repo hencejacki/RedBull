@@ -28,4 +28,6 @@
     <string name="open_packet_in_breathing_description">
         Keep alive in backend, carefully use
     </string>
+    <string name="accessibility_service_label" translatable="false">Robber</string>
+    <string name="accessibility_service_description">Open, enjoy it.</string>
 </resources>
