@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,7 +30,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.newyear.redbull.R
+import com.newyear.redbull.service.RobAccessibilityService
 import com.newyear.redbull.ui.theme.RedBullTheme
+import com.newyear.redbull.util.AccessibilityUtil
 
 // App routes definition
 enum class RedBullRoutes(@StringRes val title: Int) {
@@ -95,6 +98,8 @@ fun RedBullApp() {
         backStackEntry?.destination?.route ?: RedBullRoutes.WELCOME_SCREEN.name
     )
 
+    val context = LocalContext.current
+
     Scaffold (
         topBar = {
             RedBullTopBar(
@@ -123,7 +128,12 @@ fun RedBullApp() {
             ) {
                 WelcomeScn(
                     onOpenButtonClicked = {
-                        navController.navigate(route = RedBullRoutes.HOME_SCREEN.name)
+                        // TODO: Check network connectivity
+                        if (!AccessibilityUtil.isAccessibilityServiceEnabled(context, RobAccessibilityService::class.qualifiedName ?: RobAccessibilityService.SERVICE_NAME)) {
+                            AccessibilityUtil.openAccessibilityServiceSetting(context)
+                        } else {
+                            navController.navigate(route = RedBullRoutes.HOME_SCREEN.name)
+                        }
                     },
                     modifier = Modifier.fillMaxSize()
                 )

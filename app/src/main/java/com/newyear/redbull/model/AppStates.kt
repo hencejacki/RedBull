@@ -2,7 +2,7 @@ package com.newyear.redbull.model
 
 data class BasicFunctionalityState(
     val autoOpenRedPacket: Boolean = true,
-    val delaySeconds: Float = 0.0F,
+    val delaySeconds: Int = 200,
     val openRedPacketMySelf: Boolean = false,
     val shieldTextContent: String = ""
 )

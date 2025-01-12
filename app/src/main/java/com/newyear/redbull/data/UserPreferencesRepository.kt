@@ -6,7 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.newyear.redbull.model.BasicFunctionalityState
 import com.newyear.redbull.model.ExperimentalFunctionalityState
@@ -20,10 +20,10 @@ class UserPreferencesRepository (
     private val dataStore: DataStore<Preferences>
 ) {
     private companion object {
-        val TAG = "UserPreferencesRepository"
+        const val TAG = "UserPreferencesRepository"
         // Basic functionality
         val AUTO_OPEN_RED_PACKET = booleanPreferencesKey("auto_open_packet")
-        val DELAY_OPEN_RED_PACKET = floatPreferencesKey("delay_open_packet")
+        val DELAY_OPEN_RED_PACKET = intPreferencesKey("delay_open_packet")
         val OPEN_RED_PACKET_YOURSELF = booleanPreferencesKey("open_packet_yourself")
         val SHIELD_RED_PACKET_TEXT = stringPreferencesKey("shield_packet_text")
         // Monitor options
@@ -67,7 +67,7 @@ class UserPreferencesRepository (
         .map { preference ->
         BasicFunctionalityState(
             autoOpenRedPacket = preference[AUTO_OPEN_RED_PACKET] ?: true,
-            delaySeconds = preference[DELAY_OPEN_RED_PACKET] ?: 0.0F,
+            delaySeconds = preference[DELAY_OPEN_RED_PACKET] ?: 200,
             openRedPacketMySelf = preference[OPEN_RED_PACKET_YOURSELF] ?: false,
             shieldTextContent = preference[SHIELD_RED_PACKET_TEXT] ?: ""
         )

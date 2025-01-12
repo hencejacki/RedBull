@@ -29,7 +29,7 @@ class AppViewModel (
         updateBasicFunctionalityCache()
     }
 
-    fun updateDelaySeconds(value: Float) {
+    fun updateDelaySeconds(value: Int) {
         _basicFunctionalityState.update { currentState ->
             currentState.copy(
                 delaySeconds = value
