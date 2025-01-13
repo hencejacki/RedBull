@@ -30,4 +30,5 @@
     </string>
     <string name="accessibility_service_label" translatable="false">Robber</string>
     <string name="accessibility_service_description">Open, enjoy it.</string>
+    <string name="delay_close_packet">Open packet lingeringly</string>
 </resources>

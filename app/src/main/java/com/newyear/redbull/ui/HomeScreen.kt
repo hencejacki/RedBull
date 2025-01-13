@@ -52,6 +52,12 @@ private fun BasicFunctionalityContainer (
                 // TODO: Open dialog
             }
         )
+        FunctionalityItem(
+            title = R.string.delay_close_packet,
+            onItemClicked = {
+                // TODO: Open dialog
+            }
+        )
         FunctionalityCheckableItem(
             title = R.string.open_packet_by_self,
             checked = viewState.openRedPacketMySelf,
@@ -188,9 +194,9 @@ fun HomeScn(
         MonitorOptionsContainer(
             viewModel = appViewModel
         )
-        ExperimentalFeatures(
-            viewModel = appViewModel
-        )
+//        ExperimentalFeatures(
+//            viewModel = appViewModel
+//        )
         AboutContainer()
     }
 }

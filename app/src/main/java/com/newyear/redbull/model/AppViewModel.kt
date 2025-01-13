@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AppViewModel (
-    val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
     private var _basicFunctionalityState = MutableStateFlow(BasicFunctionalityState())
     val basicFunctionalityState = _basicFunctionalityState.asStateFlow()
@@ -29,10 +29,19 @@ class AppViewModel (
         updateBasicFunctionalityCache()
     }
 
-    fun updateDelaySeconds(value: Int) {
+    fun updateDelayOpenSeconds(value: Int) {
         _basicFunctionalityState.update { currentState ->
             currentState.copy(
                 delaySeconds = value
+            )
+        }
+        updateBasicFunctionalityCache()
+    }
+
+    fun updateDelayCloseSeconds(value: Int) {
+        _basicFunctionalityState.update { currentState ->
+            currentState.copy(
+                delayCloseSeconds = value
             )
         }
         updateBasicFunctionalityCache()
@@ -58,7 +67,7 @@ class AppViewModel (
 
     private fun updateBasicFunctionalityCache() {
         viewModelScope.launch {
-            userPreferencesRepository.SaveBasicFunctionalityPreference(basicFunctionalityState.value)
+            userPreferencesRepository.saveBasicFunctionalityPreference(basicFunctionalityState.value)
         }
     }
 
@@ -85,7 +94,7 @@ class AppViewModel (
 
     private fun updateMonitorOptionCache() {
         viewModelScope.launch {
-            userPreferencesRepository.SaveMonitorOptionPreference(monitorOptionState.value)
+            userPreferencesRepository.saveMonitorOptionPreference(monitorOptionState.value)
         }
     }
 
@@ -103,7 +112,7 @@ class AppViewModel (
 
     private fun updateExperimentalFunctionalityCache() {
         viewModelScope.launch {
-            userPreferencesRepository.SaveExperimentalFunctionalityPreference(experimentalFunctionalityState.value)
+            userPreferencesRepository.saveExperimentalFunctionalityPreference(experimentalFunctionalityState.value)
         }
     }
 

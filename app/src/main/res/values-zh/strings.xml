@@ -20,4 +20,5 @@
     <string name="open_packet_in_breathing">息屏抢红包</string>
     <string name="open_packet_in_breathing_description">保持后台活跃，谨慎使用</string>
     <string name="accessibility_service_description">开启，享受之</string>
+    <string name="delay_close_packet">延时关红包</string>
 </resources>

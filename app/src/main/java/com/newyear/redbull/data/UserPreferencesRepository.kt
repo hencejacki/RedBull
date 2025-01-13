@@ -24,6 +24,7 @@ class UserPreferencesRepository (
         // Basic functionality
         val AUTO_OPEN_RED_PACKET = booleanPreferencesKey("auto_open_packet")
         val DELAY_OPEN_RED_PACKET = intPreferencesKey("delay_open_packet")
+        val DELAY_CLOSE_RED_PACKET = intPreferencesKey("delay_close_packet")
         val OPEN_RED_PACKET_YOURSELF = booleanPreferencesKey("open_packet_yourself")
         val SHIELD_RED_PACKET_TEXT = stringPreferencesKey("shield_packet_text")
         // Monitor options
@@ -33,23 +34,24 @@ class UserPreferencesRepository (
         val OPEN_PACKET_IN_BREATH_MODE = booleanPreferencesKey("open_packet_in_breath_mode")
     }
 
-    suspend fun SaveBasicFunctionalityPreference(state: BasicFunctionalityState) {
+    suspend fun saveBasicFunctionalityPreference(state: BasicFunctionalityState) {
         dataStore.edit { preferences ->
             preferences[AUTO_OPEN_RED_PACKET] = state.autoOpenRedPacket
             preferences[DELAY_OPEN_RED_PACKET] = state.delaySeconds
+            preferences[DELAY_CLOSE_RED_PACKET] = state.delayCloseSeconds
             preferences[OPEN_RED_PACKET_YOURSELF] = state.openRedPacketMySelf
             preferences[SHIELD_RED_PACKET_TEXT] = state.shieldTextContent
         }
     }
 
-    suspend fun SaveMonitorOptionPreference(state: MonitorOptionState) {
+    suspend fun saveMonitorOptionPreference(state: MonitorOptionState) {
         dataStore.edit { preference ->
             preference[MONITOR_SYSTEM_NOTIFICATION] = state.monitorSystemNotification
             preference[MONITOR_CHAT_LIST] = state.monitorChatListNotification
         }
     }
 
-    suspend fun SaveExperimentalFunctionalityPreference(state: ExperimentalFunctionalityState) {
+    suspend fun saveExperimentalFunctionalityPreference(state: ExperimentalFunctionalityState) {
         dataStore.edit { preference ->
             preference[OPEN_PACKET_IN_BREATH_MODE] = state.openReadPacketInBreathMode
         }
@@ -102,5 +104,31 @@ class UserPreferencesRepository (
             ExperimentalFunctionalityState(
                 openReadPacketInBreathMode = preference[OPEN_PACKET_IN_BREATH_MODE] ?: false
             )
+        }
+
+    val delayOpenSeconds: Flow<Int> = dataStore.data
+        .catch {
+            if (it is IOException) {
+                Log.e(TAG, "Error reading preferences.", it)
+                emit(emptyPreferences())
+            } else {
+                throw it
+            }
+        }
+        .map { preference ->
+            preference[DELAY_OPEN_RED_PACKET] ?: 200
+        }
+
+    val delayCloseSeconds: Flow<Int> = dataStore.data
+        .catch {
+            if (it is IOException) {
+                Log.e(TAG, "Error reading preferences.", it)
+                emit(emptyPreferences())
+            } else {
+                throw it
+            }
+        }
+        .map { preference ->
+            preference[DELAY_CLOSE_RED_PACKET] ?: 0
         }
 }

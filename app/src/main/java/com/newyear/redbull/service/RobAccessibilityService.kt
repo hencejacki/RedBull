@@ -4,9 +4,15 @@ import android.accessibilityservice.AccessibilityService
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import com.newyear.redbull.RedBullApplication
 import com.newyear.redbull.data.RedPacketState
 import com.newyear.redbull.data.RedPacketViewDetail
+import com.newyear.redbull.data.UserPreferencesRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 data class RedPacketNode (
@@ -20,6 +26,11 @@ class RobAccessibilityService : AccessibilityService() {
         const val SERVICE_NAME = "com.newyear.redbull.service.RobAccessibilityService"
         private const val TAG = "RobAccessibilityService"
         private const val MAX_RETRY = 3
+        private var instance: RobAccessibilityService? = null
+
+        fun getInstance(): RobAccessibilityService? {
+            return instance
+        }
     }
 
     private var redPacketList = ArrayDeque<RedPacketNode>()
@@ -28,17 +39,38 @@ class RobAccessibilityService : AccessibilityService() {
 
     private var currentRedPacket: RedPacketNode = RedPacketNode(node = AccessibilityNodeInfo())
 
+    private lateinit var repository: UserPreferencesRepository
+
+    private var delayOpenRedPacket = 200
+
+    private var delayCloseRedPacket = 0
+
     private val focusedEvent = intArrayOf(
         AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
         AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
     )
 
+    override fun onCreate() {
+        super.onCreate()
+        instance = this
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         Log.d(TAG, "onServiceConnected: ")
+        val application = application as RedBullApplication
+        repository = application.userPreferencesRepository
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        CoroutineScope(Dispatchers.Main).launch {
+            repository.delayOpenSeconds.collectLatest {
+                delayOpenRedPacket = it
+            }
+            repository.delayCloseSeconds.collectLatest {
+                delayCloseRedPacket = it
+            }
+        }
         when {
             event?.packageName == "com.tencent.mm" && event.eventType in focusedEvent -> {
                 handleEvent(event.source)
@@ -74,9 +106,8 @@ class RobAccessibilityService : AccessibilityService() {
                     retryAgain{
                         redPacketState = RedPacketState.FETCHED
                         runBlocking {
-                            delay(1500)
+                            delay(delayCloseRedPacket.toLong())
                         }
-                        performGlobalAction(GLOBAL_ACTION_BACK)
                     }
                     return
                 }
@@ -117,7 +148,7 @@ class RobAccessibilityService : AccessibilityService() {
 
     private fun openRedPacket(node : AccessibilityNodeInfo): Boolean {
         runBlocking {
-            delay(200)
+            delay(delayOpenRedPacket.toLong())
         }
         val findResult = node.findAccessibilityNodeInfosByViewId(RedPacketViewDetail.OPEN_PACKET_BTN.viewId)
         if (findResult.isEmpty()) {
@@ -136,8 +167,8 @@ class RobAccessibilityService : AccessibilityService() {
             }
             return
         }
-//        performGlobalAction(GLOBAL_ACTION_BACK)
         whenPerformBack()
+        performGlobalAction(GLOBAL_ACTION_BACK)
     }
 
     override fun onInterrupt() {}
