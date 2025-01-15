@@ -131,4 +131,30 @@ class UserPreferencesRepository (
         .map { preference ->
             preference[DELAY_CLOSE_RED_PACKET] ?: 0
         }
+
+    val openRedPacketMine : Flow<Boolean> = dataStore.data
+        .catch {
+            if (it is IOException) {
+                Log.e(TAG, "Error reading preferences.", it)
+                emit(emptyPreferences())
+            } else {
+                throw it
+            }
+        }
+        .map { preference ->
+            preference[OPEN_RED_PACKET_YOURSELF] ?: false
+        }
+
+    val openRedPacketOther : Flow<Boolean> = dataStore.data
+        .catch {
+            if (it is IOException) {
+                Log.e(TAG, "Error reading preferences.", it)
+                emit(emptyPreferences())
+            } else {
+                throw it
+            }
+        }
+        .map { preference ->
+            preference[AUTO_OPEN_RED_PACKET] ?: true
+        }
 }

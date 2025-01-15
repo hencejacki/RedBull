@@ -8,12 +8,11 @@ import com.newyear.redbull.RedBullApplication
 import com.newyear.redbull.data.RedPacketState
 import com.newyear.redbull.data.RedPacketViewDetail
 import com.newyear.redbull.data.UserPreferencesRepository
+import com.newyear.redbull.model.BasicFunctionalityState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 data class RedPacketNode (
     val node: AccessibilityNodeInfo,
@@ -33,17 +32,17 @@ class RobAccessibilityService : AccessibilityService() {
         }
     }
 
+    private lateinit var repository: UserPreferencesRepository
+
     private var redPacketList = ArrayDeque<RedPacketNode>()
 
     private var redPacketState = RedPacketState.FETCHING
 
     private var currentRedPacket: RedPacketNode = RedPacketNode(node = AccessibilityNodeInfo())
 
-    private lateinit var repository: UserPreferencesRepository
+    private var basicFunctionalityInfo = BasicFunctionalityState()
 
-    private var delayOpenRedPacket = 200
-
-    private var delayCloseRedPacket = 0
+    private val visitedRedPacket = mutableSetOf<Int>()
 
     private val focusedEvent = intArrayOf(
         AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
@@ -55,6 +54,8 @@ class RobAccessibilityService : AccessibilityService() {
         instance = this
     }
 
+    override fun onInterrupt() {}
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         Log.d(TAG, "onServiceConnected: ")
@@ -63,18 +64,19 @@ class RobAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        CoroutineScope(Dispatchers.Main).launch {
-            repository.delayOpenSeconds.collectLatest {
-                delayOpenRedPacket = it
-            }
-            repository.delayCloseSeconds.collectLatest {
-                delayCloseRedPacket = it
-            }
+        CoroutineScope(Dispatchers.Default).launch {
+            updateParam()
         }
         when {
             event?.packageName == "com.tencent.mm" && event.eventType in focusedEvent -> {
                 handleEvent(event.source)
             }
+        }
+    }
+
+    private suspend fun updateParam() {
+        repository.basicFunctionalityPreferences.collectLatest {
+            basicFunctionalityInfo = it
         }
     }
 
@@ -85,6 +87,7 @@ class RobAccessibilityService : AccessibilityService() {
             RedPacketState.FETCHED -> {
                 if (redPacketList.isEmpty()) {
                     redPacketState = RedPacketState.FETCHING
+                    visitedRedPacket.clear()
                     return
                 }
                 currentRedPacket = redPacketList.removeFirst()
@@ -105,12 +108,10 @@ class RobAccessibilityService : AccessibilityService() {
                 if (findResult.isEmpty()) {
                     retryAgain{
                         redPacketState = RedPacketState.FETCHED
-                        runBlocking {
-                            delay(delayCloseRedPacket.toLong())
-                        }
                     }
                     return
                 }
+                Thread.sleep(basicFunctionalityInfo.delayCloseSeconds.toLong())
                 redPacketState = RedPacketState.FETCHED
                 performGlobalAction(GLOBAL_ACTION_BACK)
             }
@@ -118,42 +119,60 @@ class RobAccessibilityService : AccessibilityService() {
     }
 
     private fun findAllRedPacketInWindow(rootNode: AccessibilityNodeInfo) {
-        val redPacketNodeList = rootNode.findAccessibilityNodeInfosByViewId(RedPacketViewDetail.RED_PACKET_VIEW.viewId)
-        redPacketNodeList?.forEach {
-            var isRedPacketValid = true
-            repeat(it.childCount) { index ->
-                // Get red packet status
-                val childNode = it.getChild(index)
-                if (childNode == null) {
-                    isRedPacketValid = false
-                    return@repeat
-                }
-                val redPacketStatus = childNode.findAccessibilityNodeInfosByViewId(RedPacketViewDetail.RED_PACKET_STATUS_TEXT.viewId) ?: listOf()
-                if (redPacketStatus.isNotEmpty()) {
-                    isRedPacketValid = false
-                }
-            }
-            var clickableNode = it.getParent()
-            while (clickableNode != null && !clickableNode.actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)) {
-                clickableNode = clickableNode.getParent()
-            }
-            if (isRedPacketValid && clickableNode != null) {
-                redPacketList.add(RedPacketNode(node = clickableNode))
-            }
+        if (!basicFunctionalityInfo.autoOpenRedPacket) return
+        getOtherRedPackets(rootNode)
+        if (basicFunctionalityInfo.openRedPacketMySelf) {
+            getMineRedPackets(rootNode)
         }
         if (redPacketList.isNotEmpty()) {
             redPacketState = RedPacketState.FETCHED
         }
     }
 
-    private fun openRedPacket(node : AccessibilityNodeInfo): Boolean {
-        runBlocking {
-            delay(delayOpenRedPacket.toLong())
+    private fun getOtherRedPackets(rootNode: AccessibilityNodeInfo) {
+        val otherRedPacketNodeList = rootNode.findAccessibilityNodeInfosByViewId(RedPacketViewDetail.RED_PACKET_VIEW_OTHER.viewId)
+        otherRedPacketNodeList?.forEach {
+            val statusNode = it.findAccessibilityNodeInfosByViewId(RedPacketViewDetail.RED_PACKET_STATUS_TEXT.viewId)
+            val textNode = it.findAccessibilityNodeInfosByViewId(RedPacketViewDetail.RED_PACKET_VIEW_MINE.viewId)
+
+            visitedRedPacket.add(textNode?.first().hashCode())
+
+            if (statusNode.isNullOrEmpty()) {
+                var clickableNode = it
+                while (clickableNode != null && !clickableNode.actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)) {
+                    clickableNode = clickableNode.getParent()
+                }
+                redPacketList.add(RedPacketNode(node = clickableNode))
+            }
         }
+    }
+
+    private fun getMineRedPackets(rootNode: AccessibilityNodeInfo) {
+        val mineRedPacketNodeList = rootNode.findAccessibilityNodeInfosByViewId(RedPacketViewDetail.RED_PACKET_VIEW_MINE.viewId)
+        mineRedPacketNodeList.forEach{
+            if (visitedRedPacket.contains(it.hashCode())) {
+                return@forEach
+            }
+
+            var clickableNode = it
+            while (clickableNode != null && !clickableNode.actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)) {
+                clickableNode = clickableNode.getParent()
+            }
+
+            val statusNode = clickableNode.findAccessibilityNodeInfosByViewId(RedPacketViewDetail.RED_PACKET_STATUS_TEXT.viewId)
+
+            if (statusNode.isNullOrEmpty()) {
+                redPacketList.add(RedPacketNode(node = clickableNode))
+            }
+        }
+    }
+
+    private fun openRedPacket(node : AccessibilityNodeInfo): Boolean {
         val findResult = node.findAccessibilityNodeInfosByViewId(RedPacketViewDetail.OPEN_PACKET_BTN.viewId)
         if (findResult.isEmpty()) {
             return false
         }
+        Thread.sleep(basicFunctionalityInfo.delaySeconds.toLong())
         val openPacketBtn = findResult.first()
         return openPacketBtn.performAction(AccessibilityNodeInfo.ACTION_CLICK)
     }
@@ -171,5 +190,8 @@ class RobAccessibilityService : AccessibilityService() {
         performGlobalAction(GLOBAL_ACTION_BACK)
     }
 
-    override fun onInterrupt() {}
+    fun closeService() {
+        disableSelf()
+        visitedRedPacket.clear()
+    }
 }
